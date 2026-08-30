@@ -1,0 +1,132 @@
+module rules
+
+import std/array
+import std/math
+import std/record
+import types { Game, Choice }
+
+pub const WATCHES_PER_DAY: number = 2
+
+fn clamp(v: number, lo: number, hi: number) -> number {
+  let low = match v < lo {
+    true => lo,
+    false => v,
+  }
+  return match low > hi {
+    true => hi,
+    false => low,
+  }
+}
+
+@example day_of(0) == 1
+@example day_of(1) == 1
+@example day_of(2) == 2
+pub fn day_of(watch: number) -> number {
+  return 1 + math.floor(watch / WATCHES_PER_DAY)
+}
+
+@example is_dusk(0) == false
+@example is_dusk(1) == true
+pub fn is_dusk(watch: number) -> bool {
+  return watch % WATCHES_PER_DAY == 1
+}
+
+// How many times the walker has stood in this place before now.
+pub fn visits_to(g: Game, id: string) -> number {
+  return match record.get(g.visits, id) {
+    Some(n) => n,
+    None => 0,
+  }
+}
+
+pub fn has_seen(g: Game, id: string) -> bool {
+  return visits_to(g, id) > 0
+}
+
+// Weakness makes everything worse, which is the whole shape of the game:
+// low energy costs health, and losing health does not make you faster.
+fn exhaustion_toll(energy: number) -> number {
+  return match energy < 25 {
+    true => 1 + math.floor((25 - energy) / 6),
+    false => 0,
+  }
+}
+
+fn hunger_toll(hunger: number) -> number {
+  return match hunger >= 100 {
+    true => 12,
+    false => match hunger >= 85 {
+      true => 6,
+      false => 0,
+    },
+  }
+}
+
+// One watch passes. Everything that decays, decays here.
+pub fn pass_watch(g: Game, hunger_gain: number) -> Array<string> {
+  mut g.watch = g.watch + 1
+  mut g.hunger = clamp(g.hunger + hunger_gain, 0, 100)
+
+  let toll = exhaustion_toll(g.energy) + hunger_toll(g.hunger)
+  mut g.health = clamp(g.health - toll, 0, 100)
+
+  let events: Array<string> = []
+  let starving = match g.hunger >= 85 {
+    true => array.push(events, "Hunger has stopped being an opinion and become a fact."),
+    false => events,
+  }
+  let spent = match g.energy < 25 {
+    true => array.push(starving, "Your legs are doing arithmetic you cannot afford."),
+    false => starving,
+  }
+  let dying = match g.health <= 0 {
+    true => array.push(spent, "You sit down at the side of the road to rest a moment."),
+    false => spent,
+  }
+  mut g.alive = g.health > 0
+  return dying
+}
+
+pub fn spend_energy(g: Game, cost: number) -> void {
+  mut g.energy = clamp(g.energy - cost, 0, 100)
+}
+
+pub fn gain_energy(g: Game, amount: number) -> void {
+  mut g.energy = clamp(g.energy + amount, 0, 100)
+}
+
+pub fn feed(g: Game, hunger_drop: number) -> void {
+  mut g.hunger = clamp(g.hunger - hunger_drop, 0, 100)
+}
+
+pub fn heal(g: Game, amount: number) -> void {
+  mut g.health = clamp(g.health + amount, 0, 100)
+}
+
+// Record standing here. Returns the new visit count, which is what the
+// shrines read to decide whether to give up their word.
+pub fn arrive(g: Game, id: string) -> number {
+  let seen = visits_to(g, id) + 1
+  mut g.visits[id] = seen
+  mut g.at = id
+  mut g.path.push(id)
+  return seen
+}
+
+pub type Move =
+  | Walked({ note: string })
+  | Refused({ why: string })
+
+// Take one of the two roads. A road you cannot pay for is not a road.
+pub fn take_road(g: Game, c: Choice) -> Move {
+  return match c.coin > g.coin {
+    true => Refused(
+      { why: "You have not got the fare. It is three coin, and it has always been three coin." },
+    ),
+    false => {
+      mut g.coin = g.coin - c.coin
+      spend_energy(g, c.energy)
+      Walked({ note: c.note })
+    },
+  }
+}

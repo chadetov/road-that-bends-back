@@ -1,0 +1,104 @@
+module puzzle
+
+import std/array
+import std/regex
+import std/string
+import types { Game }
+
+// A word cut somewhere on the road, and the place it takes in the answer.
+pub type Fragment = { hub: string, word: string, rank: number }
+
+pub const FRAGMENTS: Array<Fragment> = [
+  { hub: "ferry_landing", word: "HOLLOW", rank: 1 },
+  { hub: "nine_stones", word: "CROW", rank: 2 },
+  { hub: "milestone", word: "ASH", rank: 3 },
+]
+
+@example is_hub("milestone") == true
+@example is_hub("vareska") == false
+pub fn is_hub(id: string) -> bool {
+  return array.any(FRAGMENTS, fn(f: Fragment) -> bool { f.hub == id })
+}
+
+pub fn holds(g: Game, word: string) -> bool {
+  return array.contains(g.fragments, word)
+}
+
+pub fn count_held(g: Game) -> number {
+  return array.len(g.fragments)
+}
+
+// What the place says on the second and third time of standing in it.
+// The first visit says nothing: it has to read as scenery before it can
+// read as a pattern.
+pub fn hub_reveal(id: string, visit: number) -> string {
+  let stage = visit
+  return match id {
+    "milestone" => match stage {
+      2 => "You have read this stone before. You are almost sure of it -- and the ring of beaten grass around it is wider than it was, or else you are standing in a different part of it.",
+      3 => "The third time, you put your palm flat against the scorched face, and the burnt skin of it comes away like ash, because it is ash. Underneath, cut deep and never once weathered:\n\n        ASH IS A WORD, AND IT STANDS THIRD.",
+      else => "",
+    },
+    "ferry_landing" => match stage {
+      2 => "The ferryman has not moved. Not shifted his weight, not changed his grip on the pole, not once looked upriver. You find you are increasingly certain that he has not moved since the first time you stood here.",
+      3 => "You ask him what the fare is for. For the crossing, he says. You ask how many crossings he has made. He does not answer, but he turns the coin over in his fingers, and on the reverse of it, worn nearly flat by exactly that gesture:\n\n        HOLLOW IS A WORD, AND IT STANDS FIRST.",
+      else => "",
+    },
+    "nine_stones" => match stage {
+      2 => "Nine. It was nine before, and it is nine now, and the number is not the thing that is wrong. The certainty is the thing that is wrong, and it keeps going anyway.",
+      3 => "On the third circuit you stop counting the stones and start counting the circuits, and the moment you do, the ring lets go of you. At the foot of the ninth stone, scratched small and low:\n\n        CROW IS A WORD, AND IT STANDS SECOND.",
+      else => "",
+    },
+    else => "",
+  }
+}
+
+// Third arrival hands over the word.
+pub fn award(g: Game, id: string, visit: number) -> string {
+  return match array.find(FRAGMENTS, fn(f: Fragment) -> bool { f.hub == id }) {
+    None => "",
+    Some(f) => match visit == 3 && !holds(g, f.word) {
+      true => {
+        mut g.fragments.push(f.word)
+        f.word
+      },
+      false => "",
+    },
+  }
+}
+
+// The three words in their stated order, which is not the order you found them.
+pub fn answer_words(g: Game) -> Array<string> {
+  let ordered = array.sort(FRAGMENTS, fn(x: Fragment, y: Fragment) -> number { x.rank - y.rank })
+  let held = array.filter(ordered, fn(f: Fragment) -> bool { holds(g, f.word) })
+  return array.map(held, fn(f: Fragment) -> string { f.word })
+}
+
+fn normalise(text: string) -> string {
+  let lowered = string.lower(string.trim(text))
+  let letters = regex.replace_all("[^a-z ]", lowered, "")
+  let parts = string.split(letters, " ")
+  let words = array.filter(parts, fn(w: string) -> bool { string.len(w) > 0 })
+  return string.join(words, " ")
+}
+
+// Case, spacing and punctuation are the player's business, not the door's.
+@example accepts("  Hollow,  CROW   ash ") == true
+@example accepts("ash crow hollow") == false
+@example accepts("hollow crow") == false
+pub fn accepts(text: string) -> bool {
+  return normalise(text) == "hollow crow ash"
+}
+
+// What the door says when you speak to it.
+pub fn door_prompt(g: Game) -> string {
+  let held = count_held(g)
+  return match held {
+    3 => "Three lines are cut into the black wood, and you can read all three of them now. The door is not locked. It is asking.\n\n  Speak the three words, in their own order.",
+    0 => "Three lines are cut into the black wood and not one of them means anything to you. Whatever the door is asking, you have walked past the answer.",
+    else => {
+      let n = number.to_string(held)
+      "Three lines are cut into the black wood. You can read ${n} of them. The rest is only cutting.\n\n  The road gave up what you stood still for. You did not stand still long enough."
+    },
+  }
+}

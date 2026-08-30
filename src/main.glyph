@@ -1,0 +1,454 @@
+module main
+
+import std/array
+import std/io
+import std/random { seeded, Rng }
+import std/string
+import std/record
+import types { Game, Command, GoA, GoB, Eat, Hunt, Rest, Work, Buy, Look, Notes, Quit, Unknown, Place, Empty, Wild, Market, Waystop, Shrine, Gate, Ending, new_game }
+import world
+import rules
+import rules { Walked, Refused }
+import economy
+import puzzle
+import render
+import save
+
+const DEFAULT_SEED: number = 20250829
+
+type Turn =
+  | Continue
+  | Leave
+
+fn seed_from(argv: Array<string>) -> number {
+  return match array.index_of(argv, "--seed") {
+    None => DEFAULT_SEED,
+    Some(i) => {
+      let rest = array.slice(argv, i + 1, i + 2)
+      match array.len(rest) {
+        0 => DEFAULT_SEED,
+        else => match number.parse(rest[0]) {
+          Ok(n) => n,
+          Err(_) => DEFAULT_SEED,
+        },
+      }
+    },
+  }
+}
+
+fn read_command() -> Command {
+  return match io.read_line() {
+    None => Quit,
+    Some(raw) => {
+      let t = string.lower(string.trim(raw))
+      match t {
+        "a" => GoA,
+        "b" => GoB,
+        "e" => Eat,
+        "eat" => Eat,
+        "h" => Hunt,
+        "hunt" => Hunt,
+        "r" => Rest,
+        "rest" => Rest,
+        "w" => Work,
+        "work" => Work,
+        "f" => Buy,
+        "food" => Buy,
+        "l" => Look,
+        "look" => Look,
+        "n" => Notes,
+        "notes" => Notes,
+        "q" => Quit,
+        "quit" => Quit,
+        else => Unknown({ raw: t }),
+      }
+    },
+  }
+}
+
+fn title() -> void {
+  render.blank()
+  render.say("THE ROAD THAT BENDS BACK")
+  render.blank()
+  render.say(
+    render.dim(
+      "A walk east out of Vareska. Type A or B to choose a road; the other letters are the things a body needs. Some roads go somewhere. Some roads go back.",
+    ),
+  )
+  render.blank()
+}
+
+// Print the whole of a place: the prose, whatever the third standing here
+// has shaken loose, and the two roads out.
+fn show_scene(g: Game, p: Place, visit: number) -> void {
+  render.blank()
+  render.header(g, p)
+  render.blank()
+  render.say(p.text)
+
+  let seen_before = visit > 1
+  match seen_before {
+    true => {
+      render.blank()
+      let n = number.to_string(visit)
+      render.say(render.dim("(You have stood here ${n} times.)"))
+    },
+    false => {},
+  }
+
+  let extra = puzzle.hub_reveal(p.id, visit)
+  match string.len(extra) > 0 {
+    true => {
+      render.blank()
+      render.say(extra)
+    },
+    false => {},
+  }
+
+  let won = puzzle.award(g, p.id, visit)
+  match string.len(won) > 0 {
+    true => {
+      render.blank()
+      render.say(render.bold("You will not forget that word. [${won}]"))
+    },
+    false => {},
+  }
+
+  render.blank()
+  render.choices(p)
+  render.blank()
+  render.actions(g, p)
+}
+
+fn report(g: Game, p: Place, text: string) -> void {
+  render.blank()
+  render.say(text)
+  render.blank()
+  render.header(g, p)
+  render.blank()
+  render.choices(p)
+  render.blank()
+  render.actions(g, p)
+}
+
+fn notes(g: Game) -> void {
+  render.blank()
+  render.say(render.bold("WHAT YOU HAVE"))
+  render.blank()
+
+  let found = match array.len(g.fragments) {
+    0 => "Words read on this road: none yet.",
+    else => "Words read on this road: " + string.join(g.fragments, ", "),
+  }
+  render.say(found)
+
+  match array.len(g.told) > 0 {
+    true => { render.say("Words you remember from before: " + string.join(g.told, ", ")) },
+    false => {},
+  }
+
+  render.blank()
+  let steps = render.plural(array.len(g.path), "step", "steps")
+  let places = render.plural(array.len(record.keys(g.visits)), "place", "places")
+  render.say(render.dim("You have taken ${steps} and stood in ${places}."))
+  render.blank()
+  let recent = array.slice(g.path, max0(array.len(g.path) - 6))
+  let named = array.map(recent, fn(id: string) -> string { world.place_at(id).title })
+  render.say(render.dim("Recent road: " + string.join(named, " -> ")))
+}
+
+fn max0(n: number) -> number {
+  return match n < 0 {
+    true => 0,
+    false => n,
+  }
+}
+
+fn ending(g: Game) -> void {
+  render.blank()
+  render.say(render.bold("BEYOND THE DOOR"))
+  render.blank()
+  render.say(
+    "The door does not open. It stops having been there, which is a different thing, and you walk through the place where it was.",
+  )
+  render.blank()
+  render.say(
+    "The road beyond runs straight, and for the first time since Vareska you can see the end of a road from the start of it. When you look back you can see the whole of it at once -- the ridge, the heath, the ring of stones, the sunken road, the ferryman standing at his chain with the coin still turning in his fingers -- and all of it is very much smaller than the walking of it was.",
+  )
+  render.blank()
+  render.say(
+    "The crow comes off the lintel and goes on ahead of you down the straight road. It is the first time in the whole of this journey that it has been in front.",
+  )
+  render.blank()
+  let days = render.plural(rules.day_of(g.watch), "day", "days")
+  let steps = render.plural(array.len(g.path), "step", "steps")
+  let deaths = render.plural(g.deaths, "time", "times")
+  render.say(render.dim("${days}. ${steps}. ${deaths} the road had you."))
+  render.blank()
+}
+
+fn perish(g: Game) -> void {
+  render.blank()
+  render.say(render.bold("THE ROAD GOES ON WITHOUT YOU"))
+  render.blank()
+  render.say(
+    "You sit down at the side of the road to rest a moment, and the moment is longer than you meant it to be, and then it is not yours any more.",
+  )
+  render.blank()
+
+  for w in g.fragments {
+    match array.contains(g.told, w) {
+      false => { mut g.told.push(w) },
+      true => {},
+    }
+  }
+
+  mut g.deaths = g.deaths + 1
+  mut g.fragments = []
+  mut g.at = "vareska"
+  mut g.energy = 82
+  mut g.hunger = 18
+  mut g.health = 100
+  mut g.coin = 12
+  mut g.rations = 2
+  mut g.watch = 0
+  mut g.visits = {}
+  mut g.path = []
+  mut g.alive = true
+
+  let carried = match array.len(g.told) > 0 {
+    true => " But the words you read out there are still in your mouth, and they were not put there by this life.",
+    false => " You have brought nothing back but the walking.",
+  }
+  render.say(
+    "You wake in Vareska. The market is folding itself away for the evening, and the man is selling the boots, and the crow is on the weighbridge. It is always the evening here.${carried}",
+  )
+  render.blank()
+}
+
+// Everything that decays does so here, and death is checked once.
+fn after_watch(g: Game, hunger_gain: number) -> void {
+  let events = rules.pass_watch(g, hunger_gain)
+  for e in events {
+    render.say(render.dim(e))
+  }
+}
+
+fn open_door(g: Game) -> void {
+  render.blank()
+  render.say(puzzle.door_prompt(g))
+  render.blank()
+  io.print("   speak > ")
+  match io.read_line() {
+    None => {},
+    Some(ans) => match puzzle.accepts(ans) {
+      true => {
+        let cold = match puzzle.count_held(g) < 3 {
+          true => "You have not read all three lines in this life. You say them anyway, because you have said them before.",
+          false => "You say them in the order the road gave them.",
+        }
+        render.blank()
+        render.say(cold)
+        mut g.at = "beyond"
+        mut g.finished = true
+        ending(g)
+      },
+      false => {
+        render.blank()
+        render.say(
+          "The words go into the wood and nothing comes back out. The crow does not move. Whatever you said, it was not the three words in their own order.",
+        )
+      },
+    },
+  }
+}
+
+fn walk(g: Game, p: Place, take_a: bool) -> void {
+  let c = match take_a {
+    true => p.a,
+    false => p.b,
+  }
+  let gate_here = match p.kind {
+    Gate => take_a,
+    Empty => false,
+    Wild => false,
+    Market => false,
+    Waystop => false,
+    Shrine => false,
+    Ending => false,
+  }
+  match gate_here {
+    true => { open_door(g) },
+    false => match rules.take_road(g, c) {
+      Refused({ why: w }) => {
+        render.blank()
+        render.say(w)
+      },
+      Walked({ note: n }) => {
+        after_watch(g, 7)
+        match string.len(n) > 0 {
+          true => {
+            render.blank()
+            render.say(render.dim(n))
+          },
+          false => {},
+        }
+        match g.alive {
+          false => {
+            perish(g)
+            let v = rules.arrive(g, g.at)
+            show_scene(g, world.place_at(g.at), v)
+          },
+          true => {
+            let visit = rules.arrive(g, c.goto)
+            show_scene(g, world.place_at(c.goto), visit)
+          },
+        }
+      },
+    },
+  }
+}
+
+fn act(g: Game, p: Place, text: string, hunger_gain: number) -> void {
+  after_watch(g, hunger_gain)
+  match g.alive {
+    false => {
+      render.blank()
+      render.say(text)
+      perish(g)
+      let v = rules.arrive(g, g.at)
+      show_scene(g, world.place_at(g.at), v)
+    },
+    true => { report(g, p, text) },
+  }
+}
+
+fn ask_amount() -> number {
+  io.print("   how many days of food? > ")
+  return match io.read_line() {
+    None => 0,
+    Some(raw) => match number.parse(string.trim(raw)) {
+      Ok(n) => n,
+      Err(_) => 0,
+    },
+  }
+}
+
+fn handle(g: Game, cmd: Command, rng: Rng) -> Turn {
+  let p = world.place_at(g.at)
+  match cmd {
+    Quit => { return Leave },
+    GoA => { walk(g, p, true) },
+    GoB => { walk(g, p, false) },
+    Eat => {
+      let text = economy.eat(g)
+      act(g, p, text, 2)
+    },
+    Hunt => {
+      match economy.can_hunt(p.kind) {
+        false => {
+          report(g, p, "There is nothing here to hunt but the people, and they are watching.")
+        },
+        true => {
+          let text = economy.hunt(g, rng)
+          act(g, p, text, 8)
+        },
+      }
+    },
+    Rest => {
+      let text = economy.rest(g)
+      act(g, p, text, 9)
+    },
+    Work => {
+      match economy.can_work(p.kind) {
+        false => { report(g, p, "Nobody out here is buying labour.") },
+        true => {
+          let text = economy.work(g)
+          act(g, p, text, 6)
+        },
+      }
+    },
+    Buy => {
+      match economy.can_trade(p.kind) {
+        false => { report(g, p, "There is nothing here that sells anything.") },
+        true => {
+          let want = ask_amount()
+          let text = economy.buy(g, want)
+          act(g, p, text, 1)
+        },
+      }
+    },
+    Look => {
+      let visit = rules.visits_to(g, g.at)
+      show_scene(g, p, visit)
+    },
+    Notes => {
+      notes(g)
+      render.blank()
+      render.choices(p)
+      render.blank()
+      render.actions(g, p)
+    },
+    Unknown({ raw: r }) => {
+      let hint = match string.len(r) {
+        0 => "The road waits.",
+        else => "That is not one of the roads.",
+      }
+      render.blank()
+      render.say(render.dim(hint))
+    },
+  }
+  return Continue
+}
+
+fn main(argv: Array<string>) -> number {
+  match array.contains(argv, "--forget") {
+    true => {
+      save.forget()
+      io.println("The ledger is burned. Nothing is remembered.")
+      return 0
+    },
+    false => {},
+  }
+
+  let rng = seeded(seed_from(argv))
+  let ledger = save.load()
+  let g = new_game()
+  mut g.told = ledger.fragments
+  mut g.deaths = ledger.deaths
+
+  title()
+  let first = rules.arrive(g, "vareska")
+  show_scene(g, world.place_at("vareska"), first)
+
+  loop {
+    render.prompt()
+    let turn = handle(g, read_command(), rng)
+    match turn {
+      Leave => { break },
+      Continue => {},
+    }
+    match g.finished {
+      true => { break },
+      false => {},
+    }
+  }
+
+  let remembered: Array<string> = g.told
+  for w in g.fragments {
+    match array.contains(remembered, w) {
+      false => { mut remembered.push(w) },
+      true => {},
+    }
+  }
+  let crossings = match g.finished {
+    true => ledger.crossings + 1,
+    false => ledger.crossings,
+  }
+  save.store({ fragments: remembered, deaths: g.deaths, crossings: crossings })
+
+  render.blank()
+  render.say(render.dim("The ledger remembers. Run it again."))
+  render.blank()
+  return 0
+}

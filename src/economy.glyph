@@ -1,0 +1,113 @@
+module economy
+
+import std/math
+import std/random { Rng }
+import types { Game, PlaceKind, Empty, Wild, Market, Waystop, Shrine, Gate, Ending }
+import rules
+
+pub const RATION_PRICE: number = 4
+
+pub const WAGE: number = 9
+
+pub fn can_hunt(k: PlaceKind) -> bool {
+  return match k {
+    Wild => true,
+    Empty => false,
+    Market => false,
+    Waystop => false,
+    Shrine => false,
+    Gate => false,
+    Ending => false,
+  }
+}
+
+pub fn can_trade(k: PlaceKind) -> bool {
+  return match k {
+    Market => true,
+    Waystop => true,
+    Empty => false,
+    Wild => false,
+    Shrine => false,
+    Gate => false,
+    Ending => false,
+  }
+}
+
+pub fn can_work(k: PlaceKind) -> bool {
+  return match k {
+    Market => true,
+    Waystop => true,
+    Empty => false,
+    Wild => false,
+    Shrine => false,
+    Gate => false,
+    Ending => false,
+  }
+}
+
+// Eating is the only thing that is never a gamble.
+pub fn eat(g: Game) -> string {
+  return match g.rations > 0 {
+    true => {
+      mut g.rations = g.rations - 1
+      rules.feed(g, 45)
+      rules.gain_energy(g, 18)
+      "You eat, standing up, without much ceremony. It helps more than it should."
+    },
+    false => "Your pack has nothing in it but the shape of what was in it.",
+  }
+}
+
+// The odds are read off your legs before you spend them: a tired hunter
+// is a bad hunter, which is how a bad watch turns into a bad week.
+pub fn hunt(g: Game, r: Rng) -> string {
+  let odds = 0.28 + g.energy * 0.0047
+  rules.spend_energy(g, 22)
+  return match r.bool(odds) {
+    true => {
+      let taken = r.int(1, 4)
+      mut g.rations = g.rations + taken
+      let n = number.to_string(taken)
+      let luck = match r.bool(0.35) {
+        true => {
+          mut g.coin = g.coin + 2
+          " The pelt is worth two coin to somebody."
+        },
+        false => "",
+      }
+      "You wait, and go on waiting, and it comes out to ${n} day of meat.${luck}"
+    },
+    false => "You wait a long while for nothing at all, and walk back with the day spent and the pack no heavier.",
+  }
+}
+
+pub fn buy(g: Game, want: number) -> string {
+  let affordable = math.floor(g.coin / RATION_PRICE)
+  let n = match want > affordable {
+    true => affordable,
+    false => want,
+  }
+  return match n <= 0 {
+    true => "You count your money twice, which does not improve it.",
+    false => {
+      mut g.coin = g.coin - n * RATION_PRICE
+      mut g.rations = g.rations + n
+      let bought = number.to_string(n)
+      let spent = number.to_string(n * RATION_PRICE)
+      "You buy ${bought} day of food for ${spent} coin, and the keeper counts it into your pack herself."
+    },
+  }
+}
+
+pub fn work(g: Game) -> string {
+  mut g.coin = g.coin + WAGE
+  rules.spend_energy(g, 25)
+  let w = number.to_string(WAGE)
+  return "A watch of somebody else's labour, and ${w} coin at the end of it. Your back files a complaint."
+}
+
+pub fn rest(g: Game) -> string {
+  rules.gain_energy(g, 40)
+  rules.heal(g, 10)
+  return "You sleep badly, in the way that still counts as sleeping."
+}

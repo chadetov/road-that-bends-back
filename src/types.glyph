@@ -1,0 +1,71 @@
+module types
+
+// What a place lets you do besides walking on.
+pub type PlaceKind =
+  | Empty
+  | Wild
+  | Market
+  | Waystop
+  | Shrine
+  | Gate
+  | Ending
+
+// One of the two roads out of a place.
+pub type Choice = { label: string, goto: string, energy: number, coin: number, note: string }
+
+// A node in the road graph. `a` and `b` are the two roads; either may
+// lead somewhere already walked, which is the whole point of the game.
+pub type Place = { id: string, title: string, kind: PlaceKind, text: string, a: Choice, b: Choice }
+
+// Everything that survives a single step. Mutated in place by the rules
+// module; `mut g.field = ...` is legal on a parameter, so the state is
+// threaded by reference rather than rebuilt each turn.
+pub type Game = {
+  at: string,
+  watch: number,
+  energy: number,
+  hunger: number,
+  health: number,
+  coin: number,
+  rations: number,
+  visits: Record<string, number>,
+  fragments: Array<string>,
+  path: Array<string>,
+  alive: bool,
+  finished: bool,
+  deaths: number,
+  told: Array<string>,
+}
+
+// What the player typed at the prompt, once we know what it meant.
+pub type Command =
+  | GoA
+  | GoB
+  | Eat
+  | Hunt
+  | Rest
+  | Work
+  | Buy
+  | Look
+  | Notes
+  | Quit
+  | Unknown({ raw: string })
+
+pub fn new_game() -> Game {
+  return {
+    at: "vareska",
+    watch: 0,
+    energy: 82,
+    hunger: 18,
+    health: 100,
+    coin: 12,
+    rations: 2,
+    visits: {},
+    fragments: [],
+    path: [],
+    alive: true,
+    finished: false,
+    deaths: 0,
+    told: [],
+  }
+}

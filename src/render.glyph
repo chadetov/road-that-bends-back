@@ -1,0 +1,209 @@
+module render
+
+import std/array
+import std/io
+import std/string
+import types { Game, Place }
+import rules
+import economy
+
+pub const WIDTH: number = 66
+
+// The ESC byte. `\u{..}` is the supported escape spelling -- `\u001b` and
+// `\x1b` are both rejected by the lexer.
+const ESC: string = "\u{1b}"
+
+fn paint(code: string, text: string) -> string {
+  return match io.is_terminal() {
+    true => "${ESC}[${code}m${text}${ESC}[0m",
+    false => text,
+  }
+}
+
+pub fn dim(text: string) -> string {
+  return paint("2", text)
+}
+
+pub fn bold(text: string) -> string {
+  return paint("1", text)
+}
+
+fn tone(value: number, invert: bool) -> string {
+  let level = match invert {
+    true => 100 - value,
+    false => value,
+  }
+  return match level >= 60 {
+    true => "32",
+    false => match level >= 30 {
+      true => "33",
+      false => "31",
+    },
+  }
+}
+
+fn rule(ch: string) -> string {
+  return dim(string.repeat(ch, WIDTH))
+}
+
+// A word-wrapper that leaves indented lines alone, so a word carved into
+// a door keeps the shape it was carved in.
+@example array.len(wrap("one two three four", 9)) == 3
+@example array.len(wrap("a\nb\nc", 40)) == 3
+pub fn wrap(text: string, width: number) -> Array<string> {
+  let out: Array<string> = []
+  for raw in string.split(text, "\n") {
+    let indented = string.starts_with(raw, " ")
+    let blank = string.len(string.trim(raw)) == 0
+    match blank || indented {
+      true => { mut out.push(raw) },
+      false => {
+        let line = ""
+        for w in string.split(raw, " ") {
+          let joined = match string.len(line) == 0 {
+            true => w,
+            false => "${line} ${w}",
+          }
+          mut line = match string.len(joined) > width && string.len(line) > 0 {
+            true => {
+              mut out.push(line)
+              w
+            },
+            false => joined,
+          }
+        }
+        match string.len(line) > 0 {
+          true => { mut out.push(line) },
+          false => {},
+        }
+      },
+    }
+  }
+  return out
+}
+
+pub fn say(text: string) -> void {
+  for line in wrap(text, WIDTH - 4) {
+    io.println("  ${line}")
+  }
+}
+
+pub fn blank() -> void {
+  io.println("")
+}
+
+fn meter(label: string, value: number, invert: bool) -> string {
+  let filled = math_cells(value)
+  let bar = string.repeat("#", filled) + string.repeat(".", 10 - filled)
+  let n = string.pad_start(number.to_string(value), 3, " ")
+  return "${label} ${paint(tone(value, invert), bar)} ${n}"
+}
+
+fn math_cells(value: number) -> number {
+  let cells = (value + 5) / 10
+  let whole = cells - cells % 1
+  return match whole > 10 {
+    true => 10,
+    false => match whole < 0 {
+      true => 0,
+      false => whole,
+    },
+  }
+}
+
+pub fn header(g: Game, p: Place) -> void {
+  let phase = match rules.is_dusk(g.watch) {
+    true => "dusk",
+    false => "morning",
+  }
+  let day = number.to_string(rules.day_of(g.watch))
+  let clock = "Day ${day} - ${phase}"
+  let title = string.upper(p.title)
+  let pad = WIDTH - string.len(title) - string.len(clock) - 2
+  let gap = string.repeat(
+    " ",
+    match pad < 1 {
+      true => 1,
+      false => pad,
+    },
+  )
+
+  let health_bar = meter("health", g.health, false)
+  let energy_bar = meter("energy", g.energy, false)
+  let hunger_bar = meter("hunger", g.hunger, true)
+
+  let coin = number.to_string(g.coin)
+  let food = number.to_string(g.rations)
+  let purse = dim("coin ${coin}   food ${food}")
+
+  io.println(rule("="))
+  io.println(" ${bold(title)}${gap}${dim(clock)}")
+  io.println(rule("-"))
+  io.println(" ${health_bar}   ${energy_bar}")
+  io.println(" ${hunger_bar}   ${purse}")
+  io.println(rule("="))
+}
+
+fn cost_of(energy: number, coin: number) -> string {
+  let e = number.to_string(energy)
+  return match coin > 0 {
+    true => {
+      let c = number.to_string(coin)
+      "${e} energy, ${c} coin"
+    },
+    false => "${e} energy",
+  }
+}
+
+fn road(key: string, label: string, energy: number, coin: number) -> void {
+  let cost = cost_of(energy, coin)
+  let left = "   [${key}] ${label}"
+  let pad = WIDTH - string.len(left) - string.len(cost) - 2
+  let gap = string.repeat(
+    " ",
+    match pad < 2 {
+      true => 2,
+      false => pad,
+    },
+  )
+  io.println("${bold(left)}${gap}${dim(cost)}")
+}
+
+pub fn choices(p: Place) -> void {
+  road("A", p.a.label, p.a.energy, p.a.coin)
+  road("B", p.b.label, p.b.energy, p.b.coin)
+}
+
+pub fn actions(g: Game, p: Place) -> void {
+  let verbs: Array<string> = ["[L]ook", "[N]otes", "[Q]uit"]
+  let with_eat = match g.rations > 0 {
+    true => array.concat(["[E]at"], verbs),
+    false => verbs,
+  }
+  let with_hunt = match economy.can_hunt(p.kind) {
+    true => array.concat(["[H]unt"], with_eat),
+    false => with_eat,
+  }
+  let with_trade = match economy.can_trade(p.kind) {
+    true => array.concat(["[F]ood", "[W]ork"], with_hunt),
+    false => with_hunt,
+  }
+  let all = array.concat(["[R]est"], with_trade)
+  io.println(dim("   " + string.join(all, "  ")))
+}
+
+// "1 day", "2 days" -- the game says numbers out loud often enough to care.
+@example plural(1, "day", "days") == "1 day"
+@example plural(0, "day", "days") == "0 days"
+pub fn plural(n: number, one: string, many: string) -> string {
+  let word = match n == 1 {
+    true => one,
+    false => many,
+  }
+  let count = number.to_string(n)
+  return "${count} ${word}"
+}
+
+pub fn prompt() -> void {
+  io.print(bold("\n > "))
+}

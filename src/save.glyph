@@ -1,0 +1,33 @@
+module save
+
+import std/fs
+import std/json
+
+// What the walker keeps when the walker does not. Words you have read
+// stay read: that is the whole reason a second attempt is shorter.
+pub type Ledger = { fragments: Array<string>, deaths: number, crossings: number }
+
+pub const LEDGER_PATH: string = ".crowroad-ledger.json"
+
+pub fn empty() -> Ledger {
+  return { fragments: [], deaths: 0, crossings: 0 }
+}
+
+pub fn load() -> Ledger {
+  return match fs.read_text(LEDGER_PATH) {
+    Err(_) => empty(),
+    Ok(text) => match json.parse<Ledger>(text) {
+      Ok(l) => l,
+      Err(_) => empty(),
+    },
+  }
+}
+
+pub fn store(l: Ledger) -> void {
+  let text = json.stringify(l, { indent: 2 })
+  let _ = fs.write_text(LEDGER_PATH, text)
+}
+
+pub fn forget() -> void {
+  let _ = fs.remove(LEDGER_PATH)
+}
