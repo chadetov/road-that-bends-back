@@ -3,6 +3,15 @@
 A terminal survival game about a road that does not go where roads go.
 Written in [Glyph](https://www.npmjs.com/package/@glyphlang/glyph).
 
+<p align="center">
+  <img src="docs/screenshot.svg" alt="The game running in a terminal: the walker has arrived at the scorched milestone for the second time. The status line shows health 100, energy 27, hunger 54. Below the description the game notes, in grey, that you have stood here 2 times, and that the ring of beaten grass around the stone is wider than it was." width="700">
+</p>
+
+<p align="center">
+  <em>The second arrival at the milestone. The road did not take you anywhere new &mdash;<br>
+  and that is the point. Stand here once more and the stone gives up a word.</em>
+</p>
+
 ```sh
 npm install
 glyph run            # play
