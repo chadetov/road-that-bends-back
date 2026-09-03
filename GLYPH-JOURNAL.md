@@ -6,47 +6,95 @@ TypeScript. Stateful turn loop, 20-node directed graph with cycles, resource
 simulation, seeded RNG, JSON persistence, word-wrapped ANSI UI, 14 inline
 `@example` tests.
 
-**Toolchain:** written against `glyph 0.1.93` (npm `@glyphlang/glyph`), node
-v26.3.0, tsc 6.0.3, tsx 4.22.4, macOS (darwin 25.2.0).
+**Toolchain:** written against `glyph 0.1.93` (npm `@glyphlang/glyph`), re-tested
+on 0.1.95 and 0.1.106. node v26.3.0, tsc 6.0.3, tsx 4.22.4, macOS (darwin 25.2.0).
 
-**Re-tested on `glyph 0.1.95`** (2026-08-30). The game builds and plays
-unchanged; the project pin has been moved. Findings status below.
+**Re-tested on `glyph 0.1.106`** (2026-09-04), eleven releases on. The game
+builds and plays unchanged and the pin has been moved. Three findings are
+genuinely fixed, one was implemented and shipped broken, and one improvement
+quietly made a still-open finding harder to work around.
 
-| # | Finding | 0.1.95 |
+| # | Finding | 0.1.95 | 0.1.106 |
+|---|---|---|---|
+| 1 | `\u{..}` missing from bootstrap; E0001 does not name it | unchanged | **FIXED** |
+| 2 | `std/random` has no documented signatures | unchanged | **FIXED** |
+| 2b | Discovery routes undocumented | unchanged | unchanged, and *harder* |
+| 2c | `Rng.bool` "default 0.5" contradicts its type | unchanged | **FIXED** in code, doc residual |
+| 3 | No string literal inside `${...}` | unchanged | unchanged |
+| 4 | The two `mut` doc statements contradict | unchanged | unchanged |
+| 5 | Sibling-module imports under-specified | unchanged | unchanged |
+| 6 | `glyph fix` cannot prune one name from an import | unchanged | **implemented, but it corrupts the file** |
+| 7 | Statement-position `match` ceremony | unchanged | unchanged (agreed no action) |
+| — | Positional-payload pattern leaks `{ tag, value }` | unchanged | unchanged |
+| G142 | Generic + imported missing arm was silent | FIXED | still fixed |
+
+### Fixed, and fixed well
+
+**Finding 1, both asks.** The bootstrap now documents the escape at lines
+315-317 — *"`\u{HEX}` for an arbitrary Unicode code point by its hex value,
+`\u{1b}` for ESC among them"* — and E0001 now says what to write instead:
+
+```
+Help: Check for an unterminated string, an invalid escape
+      (only \n \t \r \" \\ \u{HEX} are allowed), or a stray character.
+```
+
+That is the exact change this report argued for, and it is the one that would
+have saved me the eleven-line workaround. The general principle held: the
+diagnostic is now closed under *"what do I write instead"*.
+
+**Finding 2.** `std/random` has a real signature block — `type Rng`,
+`seeded(seed)`, and the four methods. No probing required any more.
+
+**Finding 2c, in the code.** `bool` is now `(probability?: number)` with a real
+`= 0.5` default, and `r.bool()` compiles and runs. Verified, not read.
+**Residual:** the new bootstrap block writes `rng.bool(probability: number)`
+with no `?`, so a reader still cannot tell the argument is optional. The
+contradiction moved rather than closing: the code is now right and the
+signature under-reports it.
+
+### Shipped broken
+
+**Finding 6 was implemented, and the implementation corrupts source.** The new
+prune-names path drops the newline that terminates the import:
+
+```
+before   import helper { one, two, three }
+         fn main(argv: Array<string>) -> number {
+
+after    import helper { one }fn main(argv: Array<string>) -> number {
+
+glyph fix: removed 2 unused import(s) across 1 file(s).      exit 0
+glyph check: [E0002] expected newline after import, found Fn  exit 1
+```
+
+A project that compiled before `glyph fix` does not compile after it, and `fix`
+exits 0 claiming success. `glyph fmt` cannot repair it (`1 failed`) and also
+exits 0. Characterised across four shapes:
+
+| case | shape | result |
 |---|---|---|
-| 1 | `\u{..}` missing from the bootstrap; E0001 does not name it | unchanged |
-| 2 | `std/random` has no documented signatures | unchanged |
-| 2b | Discovery routes (E0105 exports, `.glyph-runtime`) undocumented | unchanged |
-| 2c | `Rng.bool` "default 0.5" comment contradicts its type | unchanged |
-| 3 | No string literal inside `${...}` | unchanged (known standing limitation) |
-| 4 | The two `mut` doc statements still contradict | unchanged |
-| 5 | Sibling-module imports still under-specified | unchanged |
-| 6 | `glyph fix` still cannot prune one name from an import | unchanged |
-| 7 | Statement-position `match` ceremony | unchanged (agreed no action) |
-| — | Positional-payload record pattern leaks `{ tag, value }` | unchanged |
-| **G142** | **Generic + imported missing arm was silent** | **FIXED** |
+| 1 | partial prune, declaration on the next line | **breaks** |
+| 2 | partial prune, blank line after the import | ok |
+| 3 | whole unused import removed (the old path) | ok |
+| 4 | partial prune, another import on the next line | **breaks** |
 
-**The one real change is G142, and it is a good one.** On 0.1.93/0.1.94 a `match`
-missing a variant compiled clean and threw at run time when — and only when — the
-union was both generic and imported. On 0.1.95 all four cells of that matrix
-report `E0200` at compile time:
+It is the new path only, and it survives only when a blank line happens to
+absorb the lost newline — which is why it would pass any test written against
+the old behaviour. Both breaking shapes are idiomatic Glyph.
 
-```
-non-generic + same-module   [E0200] missing variants `SLeaf`
-generic     + same-module   [E0200] missing variants `Leaf`
-non-generic + imported      [E0200] missing variants `SLeaf`
-generic     + IMPORTED      [E0200] missing variants `Leaf`     <- was silent
-```
+### An improvement that cost something
 
-That closes the only hole I found in the verifiability claim, which is the claim
-the whole language is sold on. It is the right thing to have fixed first.
+0.1.106 prunes the emitted runtime to what a project actually imports: this
+codebase now emits 13 `std` modules instead of all 36. Good for output size,
+and undocumented — I found it by counting.
 
-**Everything else is exactly as reported.** The bootstrap grew by one line
-between 0.1.93 and 0.1.95 — a new `glyph --update` command — and `u{` still
-appears zero times in it. So a first-time reader writing this game today would
-walk into all six documentation-shaped walls in the same order, including
-building the same eleven-line workaround for the escape that already works. The
-compiler got more correct; the thing that misled me did not change.
+But it weakens finding 2b. Reading `.glyph-runtime/std/*.ts` was one of the two
+ways to discover an undocumented module's signatures, and it now only shows the
+modules you already import. To read `std/websocket`'s API you must first import
+`std/websocket`. The workaround for a still-open documentation gap got narrower
+because of an unrelated optimisation — which is an argument for closing 2b
+properly rather than leaving people to find their own routes in.
 
 **Author's position:** I came to Glyph with no prior knowledge of it — it was
 not in my training data. Everything below was learned in one session from
@@ -68,6 +116,11 @@ The findings are ordered by how much time they cost.
 ## 1. The working escape spelling is missing from the agent bootstrap, and E0001 does not name it
 
 **Severity: high. Reclassified after review — see the correction note.**
+
+> **Resolved in 0.1.106.** The bootstrap now documents `\u{HEX}` and names
+> `\u{1b}` for ESC, and E0001's help text lists the allowed escapes. Both asks
+> below are done. The finding is kept for the record and for the generalisation
+> at the end of it, which is the part that outlived the bug.
 
 > **Correction.** My first draft of this finding claimed Glyph could not express an
 > ESC byte at all, and recommended adding escapes to the language. That was wrong,
@@ -150,6 +203,13 @@ two diagnostics sit at opposite ends of the same design question.
 ## 2. `std/random` has no documented signatures
 
 **Severity: high for anything simulation-shaped.**
+
+> **Mostly resolved in 0.1.106.** `std/random` now has a full signature block,
+> and `Rng.bool` has a real default so `r.bool()` compiles. Two things remain:
+> the new block writes `rng.bool(probability: number)` without the `?`, so the
+> default is still invisible to a reader; and the two discovery routes below are
+> still undocumented — one of them now less useful, since the emitted runtime is
+> pruned to the modules a project already imports.
 
 `glyph llms` lists `std/random` under *"Not detailed below, but shipped and
 importable"*, alongside 11 other modules. For a game, the RNG is not a
@@ -305,7 +365,14 @@ that module rather than the general rule it is.
 
 ## 6. `glyph fix` stops short of partially-unused imports
 
-**Severity: low.**
+**Severity: was low. Now high — the fix shipped broken.**
+
+> **Implemented in 0.1.106, and it corrupts source.** `glyph fix` now prunes
+> individual names, but drops the newline terminating the import, so a project
+> that compiled before the fix does not compile after it — while `fix` exits 0
+> reporting success. Full characterisation in the 0.1.106 status section above.
+> The ask below stands, plus a second one: `fix` should re-parse every file it
+> rewrites before claiming success.
 
 E0106 fires per-name, but `--help` says `fix` removes *"imports whose **every**
 name is unused"*. So this:
@@ -417,14 +484,14 @@ call it close to complete.
 
 | # | Ask | Impact |
 |---|---|---|
-| 1 | Carry `\u{..}` from the spec into the bootstrap; make E0001 name it | Stops users building workarounds for solved problems |
-| 2 | Signatures for the 12 "shipped, not detailed" modules | Removes guesswork from the stdlib |
+| 1 | ~~Carry `\u{..}` into the bootstrap; make E0001 name it~~ | **Done in 0.1.106** |
+| 2 | Signatures for the "shipped, not detailed" modules | **`std/random` done in 0.1.106**; others unverified |
 | 2b | Document E0105-lists-exports and `.glyph-runtime/` | Two great tools nobody knows about |
-| 2c | Fix `Rng.bool`'s "default 0.5" comment | Doc contradicts the type |
+| 2c | `Rng.bool` default | **Fixed in code**; bootstrap signature still omits the `?` |
 | 3 | Relax nested string literals in `${...}` | Main friction in text-heavy code |
 | 4 | Reword the `mut` gotcha; state that parameter fields are mutable | Prevents a wrong architecture |
 | 5 | One line on bare-name sibling imports | First wall on file #2 |
-| 6 | `glyph fix` should prune single unused names | Mechanical edit, currently manual |
+| 6 | `glyph fix` pruning single names | **Shipped in 0.1.106 but corrupts the file** — and it should re-parse what it rewrites |
 | 7 | (optional) statement-position guard sugar | Removes 10 `false => {},` arms |
 
 **Overall:** eight compile failures in 1,400 lines of a language I had never
