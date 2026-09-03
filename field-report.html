@@ -1,0 +1,879 @@
+<title>Glyph Field Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Serif:ital,wght@0,400;0,500;1,400&display=swap">
+<style>
+  :root {
+    --paper:      #f4f6f7;
+    --surface:    #ffffff;
+    --sunk:       #eceff1;
+    --ink:        #161b22;
+    --ink-soft:   #3b4652;
+    --muted:      #5c6a78;
+    --rule:       #d8dee4;
+    --rule-soft:  #e6eaee;
+    --accent:     #1f6f8b;
+    --accent-dim: #d9e8ee;
+    --high:       #b4432b;
+    --med:        #96701f;
+    --low:        #5c6a78;
+    --good:       #2e7d5b;
+    --good-dim:   #dfeee7;
+
+    --sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+    --col: 68ch;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #10141a;
+      --surface:    #161c24;
+      --sunk:       #0b0f14;
+      --ink:        #e3e8ee;
+      --ink-soft:   #c2cbd6;
+      --muted:      #8b9aab;
+      --rule:       #273140;
+      --rule-soft:  #1d2530;
+      --accent:     #6cb6cf;
+      --accent-dim: #16303c;
+      --high:       #e08063;
+      --med:        #d8ac4e;
+      --low:        #8b9aab;
+      --good:       #63bd94;
+      --good-dim:   #133024;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper:      #10141a;
+    --surface:    #161c24;
+    --sunk:       #0b0f14;
+    --ink:        #e3e8ee;
+    --ink-soft:   #c2cbd6;
+    --muted:      #8b9aab;
+    --rule:       #273140;
+    --rule-soft:  #1d2530;
+    --accent:     #6cb6cf;
+    --accent-dim: #16303c;
+    --high:       #e08063;
+    --med:        #d8ac4e;
+    --low:        #8b9aab;
+    --good:       #63bd94;
+    --good-dim:   #133024;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--serif);
+    font-size: 17px;
+    line-height: 1.62;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap { max-width: 980px; margin: 0 auto; padding: 0 28px 96px; }
+
+  /* ---- masthead ---- */
+  header.masthead { padding: 72px 0 0; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; font-weight: 500;
+    letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); margin: 0 0 22px;
+  }
+  h1 {
+    font-family: var(--sans); font-weight: 700;
+    font-size: clamp(2rem, 5vw, 3.1rem); line-height: 1.06;
+    letter-spacing: -.028em; text-wrap: balance;
+    margin: 0 0 20px; max-width: 20ch;
+  }
+  .standfirst {
+    font-size: 1.16rem; line-height: 1.55; color: var(--ink-soft);
+    max-width: 60ch; margin: 0 0 34px;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+    gap: 1px; background: var(--rule);
+    border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+  }
+  .stat { background: var(--paper); padding: 18px 16px 20px; }
+  .stat .n {
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    font-size: 1.55rem; font-weight: 600; letter-spacing: -.02em;
+    display: block; line-height: 1.1;
+  }
+  .stat .l {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-top: 7px;
+  }
+  .stat.win .n { color: var(--good); }
+  .stat.bad .n { color: var(--high); }
+
+  .toolchain {
+    font-family: var(--mono); font-size: 12.5px; color: var(--muted);
+    padding: 16px 0 34px; line-height: 1.8;
+  }
+  .toolchain b { color: var(--ink-soft); font-weight: 500; }
+
+  /* ---- prose ---- */
+  p { max-width: var(--col); }
+  h2 {
+    font-family: var(--sans); font-weight: 600; font-size: 1.02rem;
+    letter-spacing: .13em; text-transform: uppercase; color: var(--muted);
+    margin: 0 0 26px; padding-bottom: 12px; border-bottom: 1px solid var(--rule);
+  }
+  h3.sub {
+    font-family: var(--sans); font-weight: 600; font-size: 1.22rem;
+    letter-spacing: -.014em; margin: 34px 0 12px; text-wrap: balance;
+  }
+  a { color: var(--accent); text-underline-offset: 3px; }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+  strong { font-weight: 600; color: var(--ink); }
+  em.term { font-style: italic; }
+  del { color: var(--muted); text-decoration-thickness: 1px; }
+
+  code {
+    font-family: var(--mono); font-size: .855em; background: var(--sunk);
+    border: 1px solid var(--rule-soft); padding: .1em .34em;
+    color: var(--ink); white-space: nowrap;
+  }
+
+  pre {
+    font-family: var(--mono); font-size: 12.6px; line-height: 1.62;
+    background: var(--sunk); border: 1px solid var(--rule);
+    padding: 16px 18px; overflow-x: auto; margin: 0 0 18px;
+    color: var(--ink); tab-size: 2;
+  }
+  pre code { background: none; border: 0; padding: 0; font-size: inherit; white-space: pre; }
+  pre.diag { background: var(--surface); border-left: 3px solid var(--high); color: var(--ink-soft); }
+  pre.diag b { color: var(--high); font-weight: 600; }
+  pre.good { background: var(--surface); border-left: 3px solid var(--good); }
+  pre .cmt { color: var(--muted); }
+
+  figcaption {
+    font-family: var(--mono); font-size: 11px; color: var(--muted);
+    letter-spacing: .04em; margin: -8px 0 18px 2px;
+  }
+
+  blockquote {
+    margin: 0 0 18px; padding: 2px 0 2px 20px;
+    border-left: 2px solid var(--rule); color: var(--ink-soft);
+    font-style: italic; max-width: var(--col);
+  }
+  blockquote p { margin: 0 0 8px; }
+  blockquote p:last-child { margin: 0; }
+
+  /* ---- status band ---- */
+  .band { border-top: 2px solid var(--ink); padding: 30px 0 10px; margin: 0 0 40px; }
+  .band .lede { color: var(--ink-soft); margin: 0 0 22px; }
+  .tablewrap { overflow-x: auto; border: 1px solid var(--rule); margin-bottom: 8px; }
+  table { border-collapse: collapse; width: 100%; background: var(--surface); }
+  table.status { min-width: 620px; }
+  th, td {
+    text-align: left; padding: 11px 14px; vertical-align: top;
+    border-bottom: 1px solid var(--rule-soft); font-size: 14.5px;
+  }
+  thead th {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--muted); background: var(--sunk);
+    border-bottom: 1px solid var(--rule); font-weight: 500;
+  }
+  tbody tr:last-child td { border-bottom: 0; }
+  td.n {
+    font-family: var(--mono); font-variant-numeric: tabular-nums;
+    color: var(--muted); font-size: 13px; width: 54px;
+  }
+  tr.r-fixed { background: var(--good-dim); }
+  tr.r-bad   { background: var(--accent-dim); }
+
+  .chip {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .1em;
+    text-transform: uppercase; display: inline-flex; align-items: baseline;
+    gap: 6px; color: var(--muted); white-space: nowrap;
+  }
+  .chip::before {
+    content: ""; width: 7px; height: 7px; background: currentColor;
+    flex: none; transform: translateY(-1px);
+  }
+  .chip.c-fixed { color: var(--good); font-weight: 600; }
+  .chip.c-bad   { color: var(--high); font-weight: 600; }
+
+  /* ---- callouts ---- */
+  .position, .correction, .resolved {
+    border: 1px solid var(--rule); background: var(--surface);
+    padding: 22px 24px; margin: 0 0 22px; max-width: var(--col);
+  }
+  .position { border-left: 3px solid var(--accent); margin-bottom: 52px; }
+  .correction { border-left: 3px solid var(--med); font-size: .97rem; }
+  .resolved { border-left: 3px solid var(--good); font-size: .97rem; }
+  .position p, .correction p, .resolved p { margin: 0 0 11px; }
+  .position p:last-child, .correction p:last-child, .resolved p:last-child { margin-bottom: 0; }
+  .tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .14em;
+    text-transform: uppercase; display: block; margin-bottom: 11px;
+  }
+  .position .tag { color: var(--accent); }
+  .correction .tag { color: var(--med); }
+  .resolved .tag { color: var(--good); }
+
+  /* ---- findings ---- */
+  .finding {
+    display: grid; grid-template-columns: 62px minmax(0, 1fr);
+    gap: 0 26px; padding: 34px 0 38px; border-top: 1px solid var(--rule);
+  }
+  .finding:first-of-type { border-top: 2px solid var(--ink); }
+  .gutter {
+    font-family: var(--mono); font-size: 12px; font-variant-numeric: tabular-nums;
+    color: var(--muted); text-align: right; padding-top: .42em;
+  }
+  .gutter .num { font-size: 1.3rem; font-weight: 600; color: var(--ink); display: block; line-height: 1; }
+  .finding h3 {
+    font-family: var(--sans); font-weight: 600; font-size: 1.4rem;
+    line-height: 1.22; letter-spacing: -.018em; text-wrap: balance;
+    margin: 0 0 14px; max-width: 32ch;
+  }
+  .sev {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: .12em;
+    text-transform: uppercase; display: inline-flex; align-items: center;
+    gap: 7px; margin: 0 0 18px; color: var(--muted);
+  }
+  .sev::before { content: ""; width: 8px; height: 8px; background: currentColor; flex: none; }
+  .sev.s-high { color: var(--high); }
+  .sev.s-med  { color: var(--med); }
+  .sev.s-low  { color: var(--low); }
+  .body > p { margin: 0 0 16px; }
+  .body > p:last-child { margin-bottom: 0; }
+
+  .asks {
+    margin: 20px 0 0; padding: 18px 20px; background: var(--accent-dim);
+    border: 1px solid var(--rule); max-width: var(--col);
+  }
+  .asks .tag { color: var(--accent); }
+  .asks ol, .asks ul { margin: 0; padding-left: 20px; }
+  .asks li { margin-bottom: 7px; }
+  .asks li:last-child { margin-bottom: 0; }
+  .asks.plain { background: var(--sunk); }
+
+  /* ---- wins ---- */
+  .win {
+    padding: 26px 0; border-top: 1px solid var(--rule);
+  }
+  .win:first-of-type { border-top: 2px solid var(--good); }
+  .win h3 {
+    font-family: var(--sans); font-weight: 600; font-size: 1.14rem;
+    letter-spacing: -.012em; margin: 0 0 12px; text-wrap: balance;
+  }
+  .win h3 .mark { color: var(--good); font-family: var(--mono); margin-right: 8px; }
+
+  .closing { border-top: 2px solid var(--ink); padding-top: 30px; max-width: var(--col); }
+  .closing p { font-size: 1.06rem; }
+
+  footer.colophon {
+    margin-top: 60px; padding-top: 22px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); line-height: 1.9;
+  }
+
+  section { margin-bottom: 68px; }
+
+  @media (max-width: 620px) {
+    body { font-size: 16px; }
+    .wrap { padding: 0 18px 64px; }
+    header.masthead { padding-top: 44px; }
+    .finding { grid-template-columns: 1fr; gap: 0; }
+    .gutter { text-align: left; padding: 0 0 12px; display: flex; align-items: baseline; gap: 10px; }
+    .gutter .num { display: inline; font-size: 1.1rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Field report &middot; Glyph 0.1.93 &rarr; 0.1.106</p>
+    <h1>Building a terminal game in Glyph</h1>
+    <p class="standfirst">
+      Eleven findings from writing 1,430 lines of a language I had never seen, ordered
+      by how much time each one cost &mdash; then re-run against every release since.
+      Three are now fixed. One was fixed and shipped broken. One correction was mine.
+    </p>
+
+    <div class="stats">
+      <div class="stat"><span class="n">1,430</span><span class="l">Lines of Glyph</span></div>
+      <div class="stat"><span class="n">8</span><span class="l">Modules</span></div>
+      <div class="stat"><span class="n">11</span><span class="l">Findings tracked</span></div>
+      <div class="stat win"><span class="n">3</span><span class="l">Fixed in 0.1.106</span></div>
+      <div class="stat bad"><span class="n">1</span><span class="l">Shipped broken</span></div>
+    </div>
+
+    <p class="toolchain">
+      <b>Built:</b> <em class="term">The Road That Bends Back</em> &mdash; an interactive terminal
+      survival game. Stateful turn loop, 20-node directed graph with cycles, resource
+      simulation, seeded RNG, JSON persistence, word-wrapped ANSI UI, 14 inline
+      <code>@example</code> tests.<br>
+      <b>Toolchain:</b> written against glyph 0.1.93, re-tested on 0.1.95 and 0.1.106
+      &middot; node v26.3.0 &middot; tsc 6.0.3 &middot; tsx 4.22.4 &middot; darwin 25.2.0
+    </p>
+  </header>
+
+  <section class="band">
+    <h2>Status on 0.1.106 &mdash; re-tested 4 Sep 2026</h2>
+    <p class="lede">
+      Every finding was re-run against a fresh install rather than assumed to carry
+      over, including the ones I expected to be unchanged. Two versions shown so the
+      movement is visible.
+    </p>
+
+    <div class="tablewrap">
+      <table class="status">
+        <thead><tr><th>#</th><th>Finding</th><th>0.1.95</th><th>0.1.106</th></tr></thead>
+        <tbody>
+          <tr class="r-fixed"><td class="n">01</td><td><code>\u{..}</code> missing from bootstrap; E0001 does not name it</td><td><span class="chip">Unchanged</span></td><td><span class="chip c-fixed">Fixed</span></td></tr>
+          <tr class="r-fixed"><td class="n">02</td><td><code>std/random</code> has no documented signatures</td><td><span class="chip">Unchanged</span></td><td><span class="chip c-fixed">Fixed</span></td></tr>
+          <tr><td class="n">02b</td><td>Discovery routes undocumented</td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged, and harder</span></td></tr>
+          <tr class="r-fixed"><td class="n">02c</td><td><code>Rng.bool</code> &ldquo;default 0.5&rdquo; contradicts its type</td><td><span class="chip">Unchanged</span></td><td><span class="chip c-fixed">Fixed in code</span></td></tr>
+          <tr><td class="n">03</td><td>No string literal inside <code>${...}</code></td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged</span></td></tr>
+          <tr><td class="n">04</td><td>The two <code>mut</code> doc statements contradict</td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged</span></td></tr>
+          <tr><td class="n">05</td><td>Sibling-module imports under-specified</td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged</span></td></tr>
+          <tr class="r-bad"><td class="n">06</td><td><code>glyph fix</code> cannot prune one name from an import</td><td><span class="chip">Unchanged</span></td><td><span class="chip c-bad">Shipped broken</span></td></tr>
+          <tr><td class="n">07</td><td>Statement-position <code>match</code> ceremony</td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged</span></td></tr>
+          <tr><td class="n">&mdash;</td><td>Positional-payload pattern leaks <code>{ tag, value }</code></td><td><span class="chip">Unchanged</span></td><td><span class="chip">Unchanged</span></td></tr>
+          <tr class="r-fixed"><td class="n">G142</td><td>Generic + imported missing arm was silent</td><td><span class="chip c-fixed">Fixed</span></td><td><span class="chip c-fixed">Still fixed</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="sub">Fixed, and fixed well</h3>
+    <p>
+      <strong>Finding 01, both asks.</strong> The bootstrap now documents the escape
+      &mdash; <em class="term">&ldquo;<code>\u{HEX}</code> for an arbitrary Unicode code point
+      by its hex value, <code>\u{1b}</code> for ESC among them&rdquo;</em> &mdash; and E0001
+      now says what to write instead:
+    </p>
+<pre class="good"><code>Help: Check for an unterminated string, an invalid escape
+      (only \n \t \r \" \\ \u{HEX} are allowed), or a stray character.</code></pre>
+    <p>
+      That is the exact change this report argued for, and the one that would have saved
+      me the eleven-line workaround. The general principle held: the diagnostic is now
+      closed under <em class="term">&ldquo;what do I write instead&rdquo;</em>.
+    </p>
+    <p>
+      <strong>Finding 02.</strong> <code>std/random</code> has a real signature block now
+      &mdash; <code>type Rng</code>, <code>seeded(seed)</code>, and the four methods. No
+      probing required.
+    </p>
+    <p>
+      <strong>Finding 02c, in the code.</strong> <code>bool</code> is now
+      <code>(probability?: number)</code> with a real <code>= 0.5</code> default, and
+      <code>r.bool()</code> compiles and runs. Verified by running it, not by reading the
+      type. <strong>Residual:</strong> the new bootstrap block writes
+      <code>rng.bool(probability: number)</code> with no <code>?</code>, so a reader still
+      cannot tell the argument is optional. The contradiction moved rather than closed
+      &mdash; the code is right and the signature now under-reports it.
+    </p>
+
+    <h3 class="sub">Shipped broken</h3>
+    <p>
+      <strong>Finding 06 was implemented, and the implementation corrupts source.</strong>
+      The new prune-names path drops the newline that terminates the import:
+    </p>
+<pre class="diag"><code>before   import helper { one, two, three }
+         fn main(argv: Array&lt;string&gt;) -&gt; number {
+
+after    import helper { one }fn main(argv: Array&lt;string&gt;) -&gt; number {
+
+glyph fix:   removed 2 unused import(s) across 1 file(s).       exit 0
+glyph check: <b>[E0002] expected newline after import, found Fn</b>   exit 1</code></pre>
+    <p>
+      A project that compiled before <code>glyph fix</code> does not compile after it, and
+      <code>fix</code> exits 0 claiming success. <code>glyph fmt</code> cannot repair it
+      (<code>1 failed</code>) and also exits 0, which looks like a second, smaller bug in
+      <code>fmt</code>'s exit code. Characterised across four shapes:
+    </p>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Case</th><th>Shape</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="n">1</td><td>partial prune, declaration on the next line</td><td><span class="chip c-bad">Breaks</span></td></tr>
+          <tr><td class="n">2</td><td>partial prune, blank line after the import</td><td><span class="chip">ok</span></td></tr>
+          <tr><td class="n">3</td><td>whole unused import removed (the old path)</td><td><span class="chip">ok</span></td></tr>
+          <tr><td class="n">4</td><td>partial prune, another import on the next line</td><td><span class="chip c-bad">Breaks</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>
+      It is the new path only, and it survives <em class="term">only</em> when a blank line
+      happens to sit after the import and absorb the lost newline &mdash; which is why it
+      would pass any test written against the old behaviour. Both breaking shapes are
+      idiomatic Glyph: consecutive imports, and an import block sitting directly on top of
+      the first declaration.
+    </p>
+    <div class="asks">
+      <span class="tag">Asks</span>
+      <ol>
+        <li>Emit the newline with the rewritten import rather than reusing the old line's terminator.</li>
+        <li>Have <code>fix</code> re-parse every file it rewrote before reporting success. That would have caught this one regardless of cause &mdash; an autofix that can break a file should never exit 0 quietly.</li>
+      </ol>
+    </div>
+
+    <h3 class="sub">An improvement that cost something</h3>
+    <p>
+      0.1.106 prunes the emitted runtime to what a project actually imports: this codebase
+      now emits 13 <code>std</code> modules instead of all 36. Good for output size, and
+      undocumented &mdash; I found it by counting.
+    </p>
+    <p>
+      But it weakens finding 02b. Reading <code>.glyph-runtime/std/*.ts</code> was one of
+      the two ways to discover an undocumented module's signatures, and it now only shows
+      modules you already import. To read <code>std/websocket</code>'s API you must first
+      import <code>std/websocket</code>. The workaround for a still-open documentation gap
+      got narrower because of an unrelated optimisation &mdash; which is an argument for
+      closing 02b properly rather than leaving people to find their own routes in.
+    </p>
+  </section>
+
+  <div class="position">
+    <span class="tag">Author's position</span>
+    <p>
+      I came to Glyph with no prior knowledge of it &mdash; it was not in my training data.
+      Everything below was learned in one session from <code>glyph llms</code>, the
+      diagnostics, and probing. That makes this a reasonably clean test of the
+      &ldquo;zero to correct in one read&rdquo; claim.
+    </p>
+    <p>
+      <strong>Headline: the claim mostly holds.</strong> I wrote 1,430 lines with four
+      compile failures in the game code (plus three more in deliberate probes), every one
+      of which the compiler explained precisely enough to fix on the next attempt.
+    </p>
+    <p>
+      <strong>One finding was wrong and has been corrected in place.</strong> I originally
+      reported that Glyph could not express an ESC byte; it can, via <code>\u{1b}</code>.
+      The reframed finding 01 is about why I concluded otherwise, which turned out to be
+      the more useful result.
+    </p>
+  </div>
+
+  <section>
+  <h2>Findings, ordered by cost</h2>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">01</span></div>
+      <div class="body">
+        <h3>The working escape spelling is missing from the agent bootstrap, and E0001 does not name it</h3>
+        <p class="sev s-high">High &middot; reclassified after review</p>
+
+        <div class="resolved">
+          <span class="tag">Resolved in 0.1.106</span>
+          <p>
+            The bootstrap now documents <code>\u{HEX}</code> and names <code>\u{1b}</code>
+            for ESC, and E0001's help text lists the allowed escapes. Both asks are done.
+            Kept for the record, and for the generalisation at the end &mdash; which is the
+            part that outlived the bug.
+          </p>
+        </div>
+
+        <div class="correction">
+          <span class="tag">Correction</span>
+          <p>
+            My first draft claimed Glyph could not express an ESC byte at all, and
+            recommended adding escapes to the language. That was wrong, and the Glyph
+            maintainers caught it. <strong><code>\u{1b}</code> works, and worked on
+            0.1.93.</strong> I verified it myself and deleted my workaround.
+          </p>
+          <p>
+            I am leaving the finding in &mdash; reframed &mdash; because
+            <em class="term">how</em> I got it wrong is the actual result here.
+          </p>
+        </div>
+
+        <p>Three spellings, one of which works, on the version I used:</p>
+<pre><code>\u{1b}    compiles; tsc --strict passes; emits a real 0x1B
+\u001b    [E0001] parse: lex error: invalid escape sequence `\u` at offset 85
+\x1b      [E0001] parse: lex error: invalid escape sequence `\x` at offset 85</code></pre>
+        <p>Verified at the byte level:</p>
+<pre class="good"><code>$ glyph run | od -c
+0000000  033   [   3   1   m   R   E   D 033   [   0   m       d   o   n</code></pre>
+
+        <p>
+          <strong>How a competent first-time user still gets this wrong.</strong> I tried
+          the two spellings I knew from other languages, got a lexer error saying the
+          escape was <em class="term">invalid</em> rather than
+          <em class="term">misspelled</em>, and concluded the feature did not exist. Then I
+          built an eleven-line workaround around that conclusion:
+        </p>
+<pre><code><span class="cmt">// what I shipped, believing I had to</span>
+fn esc_byte() -&gt; string {
+  return match bytes.from_hex("1b") {
+    Ok(b) =&gt; match bytes.to_text(b) { Ok(s) =&gt; s, Err(_) =&gt; "", },
+    Err(_) =&gt; "",
+  }
+}
+const ESC: string = esc_byte()
+
+<span class="cmt">// what I should have written</span>
+const ESC: string = "\u{1b}"</code></pre>
+
+        <p><strong>The evidence for why this happened, which I checked myself:</strong></p>
+        <div class="asks plain">
+          <ul>
+            <li><code>\u{HEX}</code> <strong>is</strong> documented &mdash; D12 of <code>docs/language/spec.md</code> names it among the decoded escapes. But <code>u{</code> appeared <strong>0 times</strong> in the 1,111-line bootstrap, and zero times in all three of its copies (<code>llms.txt</code>, <code>AGENTS.md</code>, <code>web/llms.txt</code>). Present where a human browsing the spec would find it; absent where a machine is told to look. A worse failure than &ldquo;undocumented&rdquo;, and a more specific one to fix.</li>
+            <li>The diagnostic said <code>invalid escape sequence \u</code>. To a reader who just wrote <code>\u001b</code>, &ldquo;invalid&rdquo; reads as <em class="term">unsupported</em>, not <em class="term">wrong syntax</em>.</li>
+          </ul>
+        </div>
+
+        <p style="margin-top:18px">
+          <strong>Generalisation worth more than the specific bug:</strong> a diagnostic
+          that says a construct is invalid, without saying what to write instead, teaches
+          an agent that the capability is absent. E0105 already does the opposite &mdash;
+          it lists the real exports &mdash; and that listing is what let me discover
+          <code>std/random</code> in finding 02. The two diagnostics sat at opposite ends
+          of the same design question, and 0.1.106 moved E0001 to the right end.
+        </p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">02</span></div>
+      <div class="body">
+        <h3><code>std/random</code> has no documented signatures</h3>
+        <p class="sev s-high">High &middot; for anything simulation-shaped</p>
+
+        <div class="resolved">
+          <span class="tag">Mostly resolved in 0.1.106</span>
+          <p>
+            <code>std/random</code> now has a full signature block, and
+            <code>Rng.bool</code> has a real default so <code>r.bool()</code> compiles.
+            Two things remain: the new block omits the <code>?</code>, so the default is
+            invisible to a reader; and the two discovery routes below are still
+            undocumented, one of them now less useful.
+          </p>
+        </div>
+
+        <p>
+          <code>glyph llms</code> listed <code>std/random</code> under
+          <em class="term">&ldquo;Not detailed below, but shipped and importable&rdquo;</em>,
+          alongside 11 other modules. For a game the RNG is not a footnote &mdash; it is
+          core, and I could not call it.
+        </p>
+        <p>
+          Two undocumented discovery routes got me there, and <strong>both are genuinely
+          good and neither is written down</strong>:
+        </p>
+        <p><strong>(a) Ask for a name that doesn't exist and read the error.</strong></p>
+<pre class="diag"><code><b>[E0105]</b> Error: import: `nonexistent_probe` is not exported by `std/random`
+        (exports: Rng, seeded)</code></pre>
+        <p>
+          <strong>(b) Read the emitted runtime.</strong> <code>glyph build</code> writes
+          stdlib source to <code>&lt;out&gt;/.glyph-runtime/std/*.ts</code>, which gave me
+          the exact type.
+        </p>
+        <p>
+          <strong>Sub-finding, now fixed.</strong> The runtime comment promised
+          <em class="term">&ldquo;(default 0.5)&rdquo;</em> above a non-optional parameter, so
+          <code>r.bool()</code> failed as TS2554. Both halves now agree.
+        </p>
+        <div class="asks">
+          <span class="tag">Asks</span>
+          <ol>
+            <li><del>Signature blocks for the &ldquo;shipped but not detailed&rdquo; modules.</del> <strong>Done for <code>std/random</code>;</strong> the other eleven unverified.</li>
+            <li>Document the E0105 export listing and the <code>.glyph-runtime</code> dump. They are the two best discovery tools in the toolchain and I found both by accident. Still open &mdash; and route (b) now only reveals modules you already import.</li>
+            <li><del>Fix the <code>bool</code> default.</del> <strong>Done in code;</strong> the bootstrap signature still hides it.</li>
+          </ol>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">03</span></div>
+      <div class="body">
+        <h3>No string literal inside <code>${...}</code></h3>
+        <p class="sev s-med">Medium &middot; correct behaviour, real cost, excellent message</p>
+        <p>Documented, and the diagnostic is close to perfect &mdash; it names the fix inline:</p>
+<pre class="diag"><code><b>[E0002]</b> Error: parse: expected matching `}` for `${...}` (a nested string
+        literal inside `${...}` is not supported in v1 &mdash; hoist it into a `let`)</code></pre>
+        <p>
+          But in a <strong>text-heavy</strong> program it is the restriction I hit most,
+          because the natural shape for formatted output is exactly the banned one:
+        </p>
+<pre><code><span class="cmt">// what you want to write</span>
+io.println(" ${meter("health", g.health, false)}   ${meter("energy", g.energy, false)}")
+
+<span class="cmt">// what you must write</span>
+let health_bar = meter("health", g.health, false)
+let energy_bar = meter("energy", g.energy, false)
+io.println(" ${health_bar}   ${energy_bar}")</code></pre>
+        <p>
+          The codebase carries <strong>nine <code>let</code> bindings that exist only to
+          escape this rule</strong> &mdash; four in <code>render.header</code>, five across
+          <code>main.ending</code> and <code>main.notes</code>. Each is individually fine.
+          Collectively they are the main source of noise in the rendering code, which in a
+          terminal game is a third of the program.
+        </p>
+        <p>
+          A v1 lexer simplification rather than a design position, and confirmed as such.
+          Flagged because &ldquo;programs that print a lot of formatted text&rdquo; is a large
+          slice of what people write CLIs for, and this is where they will feel Glyph.
+        </p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">04</span></div>
+      <div class="body">
+        <h3>Two doc statements about <code>mut</code> contradict each other</h3>
+        <p class="sev s-med">Medium &middot; cost a probe, could cost an architecture</p>
+        <p>The syntax section says field assignment is legal:</p>
+        <blockquote><p><code>mut</code> is legal in exactly four forms &mdash; <code>mut x = e</code>, <strong><code>mut x.field = e</code></strong>, <code>mut x[k] = e</code>, <code>mut x.method(args)</code>.</p></blockquote>
+        <p>The gotchas section says the opposite:</p>
+        <blockquote><p><strong><code>mut</code> is narrow.</strong> It only enables reassignment and mutating method calls; there is no <code>mut</code> parameter, <strong>field</strong>, or other position.</p></blockquote>
+        <p>
+          Read together, the second reads as <em class="term">&ldquo;you cannot mutate through
+          a parameter&rdquo;</em> &mdash; which would force every state transition in a game to
+          rebuild and return a whole <code>Game</code> record. That is a materially worse
+          architecture, and I was about to write it.
+        </p>
+        <p>I probed instead, and <strong>in-place mutation of a parameter's field works</strong>:</p>
+<pre class="good"><code>fn drain(s: Stats, cost: number) -&gt; void {
+  mut s.energy = s.energy - cost
+}
+<span class="cmt">// after drain(s, 30): s.energy == 70</span></code></pre>
+        <p>
+          The entire game threads one mutable <code>Game</code> by reference on the strength
+          of that probe. <code>mut g.path.push(id)</code> &mdash; a mutating method on a
+          <em class="term">field</em> of a parameter &mdash; works too.
+        </p>
+        <div class="asks">
+          <span class="tag">Ask</span>
+          <ul>
+            <li>
+              The gotcha means <em class="term">&ldquo;<code>mut</code> is not a declaration
+              modifier &mdash; there is no <code>mut</code> parameter or <code>mut</code>
+              field <strong>declaration</strong>&rdquo;</em>. Say that, and add one line
+              stating that a parameter's fields <strong>are</strong> mutable in place. This
+              is a load-bearing fact about how you structure a Glyph program.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">05</span></div>
+      <div class="body">
+        <h3>Sibling-module imports are under-specified</h3>
+        <p class="sev s-low">Low &middot; but it is the first wall on file number two</p>
+        <p>E0101's fix text reads:</p>
+        <blockquote><p>Use an absolute module path (<code>std/io</code>, <code>myapp/x</code>)</p></blockquote>
+        <p>
+          The <code>myapp/x</code> example implies a project module needs a package-name
+          prefix. It does not &mdash; a sibling in the same <code>src/</code> is imported by
+          its <strong>bare module name</strong>:
+        </p>
+<pre class="good"><code>import world          <span class="cmt">// src/world.glyph, module world</span>
+import rules</code></pre>
+        <p>
+          I had to probe to establish this. One line in the bootstrap's &ldquo;canonical
+          program shape&rdquo; section would settle it.
+        </p>
+        <p>
+          <strong>Related, also worth one line:</strong> to use both a namespace and bare
+          constructors from the same project module you need two import lines &mdash;
+        </p>
+<pre><code>import rules
+import rules { Walked, Refused }</code></pre>
+        <p>
+          The bootstrap shows this for <code>std/time</code> but presents it as a quirk of
+          that module rather than the general rule it is.
+        </p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">06</span></div>
+      <div class="body">
+        <h3><code>glyph fix</code> stops short of partially-unused imports</h3>
+        <p class="sev s-high">Was low &middot; now high, the fix shipped broken</p>
+
+        <div class="correction">
+          <span class="tag">Implemented in 0.1.106, and it corrupts source</span>
+          <p>
+            <code>glyph fix</code> now prunes individual names, but drops the newline
+            terminating the import, so a project that compiled before the fix does not
+            compile after it &mdash; while <code>fix</code> exits 0 reporting success. Full
+            characterisation in the status section above. The ask below stands, plus a
+            second: <code>fix</code> should re-parse every file it rewrites before claiming
+            success.
+          </p>
+        </div>
+
+        <p>
+          E0106 fires per-name, but <code>--help</code> said <code>fix</code> removes
+          <em class="term">&ldquo;imports whose every name is unused&rdquo;</em>. So this:
+        </p>
+<pre><code>import types { Game, Place, PlaceKind, Wild, Market, Waystop, Shrine, Gate, Ending }</code></pre>
+        <p>
+          produced seven separate E0106 warnings and <code>glyph fix</code> could not touch
+          any of them, because <code>Game</code> and <code>Place</code> were still live.
+          Hand-editing a nine-name import list is exactly the mechanical edit an autofix
+          should own. I hit this twice &mdash; <code>economy.glyph</code> and
+          <code>render.glyph</code>.
+        </p>
+      </div>
+    </article>
+
+    <article class="finding">
+      <div class="gutter"><span class="num">07</span></div>
+      <div class="body">
+        <h3>The <code>match</code>-only design has one repetitive shape</h3>
+        <p class="sev s-low">Low &middot; a design cost, honestly incurred</p>
+        <p>
+          No <code>if</code> is a defensible choice and I do not want it reversed. But the
+          statement-position guard is genuinely noisy, and it recurs:
+        </p>
+<pre><code>match string.len(extra) &gt; 0 {
+  true =&gt; {
+    render.blank()
+    render.say(extra)
+  },
+  false =&gt; {},
+}</code></pre>
+        <p>
+          That <code>false =&gt; {},</code> is pure ceremony. There are <strong>ten such
+          arms</strong> in this codebase, concentrated in the rendering and turn-loop code
+          where the logic is &ldquo;sometimes print an extra thing&rdquo;.
+        </p>
+        <p>
+          Everywhere else <code>match</code> was a pleasure &mdash; including nested in a
+          <code>match</code> arm, which compiles cleanly and reads well:
+        </p>
+<pre class="good"><code>fn hunger_toll(hunger: number) -&gt; number {
+  return match hunger &gt;= 100 {
+    true =&gt; 12,
+    false =&gt; match hunger &gt;= 85 {
+      true =&gt; 6,
+      false =&gt; 0,
+    },
+  }
+}</code></pre>
+        <div class="asks">
+          <span class="tag">Ask</span>
+          <ul>
+            <li>
+              Nothing urgent, and agreed as no-action. If a sugar is ever considered, a
+              statement-position <code>when cond { ... }</code> with no else-arm requirement
+              would absorb all ten cases without reintroducing <code>if</code>/<code>else</code>
+              as an expression form.
+            </li>
+          </ul>
+        </div>
+      </div>
+    </article>
+  </section>
+
+  <section>
+    <h2>What worked well &mdash; and specifically why</h2>
+
+    <article class="win">
+      <h3><span class="mark">&#10003;</span>Exhaustiveness checking as a refactoring tool</h3>
+      <p>
+        Halfway through I realised place kinds were wrong: a bare gate in a field was
+        offering a market and paid labour. I added one variant, <code>Empty</code>, to
+        <code>PlaceKind</code>. The compiler responded with exactly four errors:
+      </p>
+<pre class="diag"><code><b>[E0200]</b> non-exhaustive match on `PlaceKind`: missing variants `Empty`   &times;4</code></pre>
+      <p>
+        One for each site that needed a <em class="term">decision</em>, across three
+        modules, with no grep and no guessing. Then it went silent the moment all four were
+        answered. This is the single best experience I had with the language, it is the
+        argument for the whole design, and it is worth putting front and centre in the pitch.
+      </p>
+    </article>
+
+    <article class="win">
+      <h3><span class="mark">&#10003;</span>Diagnostics</h3>
+      <p>
+        Uniformly excellent: stable code, exact span, a <code>Help:</code> line that states
+        the fix, and a docs link. Across every failure in this build I never once had to
+        guess what the compiler meant. The E0105 <code>exports: Rng, seeded</code> listing
+        is a small masterpiece &mdash; and 0.1.106 brought E0001 up to the same standard.
+      </p>
+    </article>
+
+    <article class="win">
+      <h3><span class="mark">&#10003;</span><code>@example</code> on the declaration</h3>
+      <p>
+        Tests that run on every <code>glyph check</code> with zero configuration are the
+        right default. They immediately caught an error &mdash; mine, in a test I had just
+        written:
+      </p>
+<pre class="diag"><code>glyph check: example failed: render example #0:
+             (array.len(wrap("one two three four", 9))) != (2)</code></pre>
+      <p>The answer was 3. The wrapper was right and I was wrong, and I knew within seconds.</p>
+    </article>
+
+    <article class="win">
+      <h3><span class="mark">&#10003;</span><code>glyph fmt</code> is safe on prose</h3>
+      <p>
+        This game is mostly text: 20 places of multi-line literals, some with deliberate
+        leading indentation &mdash; a word carved into a door. <code>fmt</code> reformatted
+        all eight modules and changed not one character inside a string. For a
+        content-heavy program that trust matters a lot.
+      </p>
+    </article>
+
+    <article class="win">
+      <h3><span class="mark">&#10003;</span>The release cadence, and taking corrections</h3>
+      <p>
+        Thirteen releases in the window this report covers, and the two things fixed first
+        were the silent exhaustiveness hole and the diagnostic that misled me &mdash; in
+        that order, which is the right order. The maintainers also corrected me twice, both
+        times narrowing a claim of mine that I could not support, and both times the
+        narrower version was the more actionable one.
+      </p>
+    </article>
+  </section>
+
+  <section>
+    <h2>Summary of asks</h2>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Ref</th><th>Ask</th><th>State</th></tr></thead>
+        <tbody>
+          <tr class="r-fixed"><td class="n">01</td><td><del>Carry <code>\u{..}</code> into the bootstrap; make E0001 name it</del></td><td><span class="chip c-fixed">Done in 0.1.106</span></td></tr>
+          <tr><td class="n">02</td><td>Signature blocks for the &ldquo;shipped, not detailed&rdquo; modules</td><td><span class="chip"><code>std/random</code> done; 11 unverified</span></td></tr>
+          <tr><td class="n">02b</td><td>Document E0105's export listing and <code>.glyph-runtime</code></td><td><span class="chip">Open, and route (b) narrowed</span></td></tr>
+          <tr class="r-fixed"><td class="n">02c</td><td><del><code>Rng.bool</code> default</del></td><td><span class="chip c-fixed">Fixed in code</span>; doc omits the <code>?</code></td></tr>
+          <tr><td class="n">03</td><td>Relax nested string literals in <code>${...}</code></td><td><span class="chip">Open, known v1 limit</span></td></tr>
+          <tr><td class="n">04</td><td>Reword the <code>mut</code> gotcha; state that parameter fields are mutable</td><td><span class="chip">Open</span></td></tr>
+          <tr><td class="n">05</td><td>One line on bare-name sibling imports</td><td><span class="chip">Open</span></td></tr>
+          <tr class="r-bad"><td class="n">06</td><td><code>glyph fix</code>: emit the newline, and re-parse what it rewrites</td><td><span class="chip c-bad">Regression, urgent</span></td></tr>
+          <tr><td class="n">07</td><td>Optional statement-position guard sugar</td><td><span class="chip">Agreed no action</span></td></tr>
+          <tr><td class="n">&mdash;</td><td>Positional-payload pattern should not leak <code>{ tag, value }</code></td><td><span class="chip">Open</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="closing">
+    <p>
+      <strong>Overall:</strong> four compile failures in 1,430 lines of a language I had
+      never seen, every one self-explaining, and the finished program is more refactor-safe
+      than the TypeScript I would have written instead. Thirteen releases later the
+      compiler has closed its one silent hole and the diagnostic that misled me now says
+      what to write instead &mdash; which was the whole argument of this report. What
+      remains is mostly documentation, plus one autofix that needs to stop reporting
+      success when it has broken the file.
+    </p>
+  </div>
+
+  <footer class="colophon">
+    Written while building <em class="term">The Road That Bends Back</em> &mdash; 20 places,
+    three cycles, one door.<br>
+    All diagnostics quoted verbatim from <code>glyph check</code> / <code>glyph build</code>
+    / <code>glyph fix</code> output. Every &ldquo;unchanged&rdquo; re-run per release, not assumed.<br>
+    Source: <a href="https://github.com/chadetov/road-that-bends-back">github.com/chadetov/road-that-bends-back</a>
+  </footer>
+
+</div>

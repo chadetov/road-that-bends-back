@@ -94,3 +94,11 @@ Content is data: adding a place is an entry in `world.glyph`'s `PLACES`, and
 making it a fourth cycle is one more entry in `puzzle.glyph`'s `FRAGMENTS`.
 
 `glyph check src` runs 14 inline `@example` tests with the build.
+
+## The field report
+
+Writing this was also a dogfooding exercise. [`GLYPH-JOURNAL.md`](GLYPH-JOURNAL.md)
+is a field report on building in Glyph with no prior knowledge of it: eleven
+findings with verbatim diagnostics, one of them corrected after review, re-tested
+against every release from 0.1.93 to 0.1.106. [`field-report.html`](field-report.html)
+is the same content, styled — open it in a browser.
